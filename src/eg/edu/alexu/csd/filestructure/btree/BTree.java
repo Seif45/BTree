@@ -6,9 +6,13 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
 
     private int minimumDegree;
     private IBTreeNode<K, V> root;
+    private final int MIN_KEYS;
+    private final int MAX_KEYS;
 
     public BTree (int minimumDegree){
         this.minimumDegree = minimumDegree;
+        MIN_KEYS =  minimumDegree - 1;
+        MAX_KEYS = minimumDegree * 2 - 1;
     }
 
     @Override
