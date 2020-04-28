@@ -32,9 +32,6 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
 
     @Override
     public V search(K key) {
-        if (key == null){
-            return null;
-        }
         IBTreeNode<K, V> found = findNode(this.root, key); //find the node that contains the key
         if (found == null){
             return null;
@@ -48,7 +45,7 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
     }
 
     private IBTreeNode<K, V> findNode(IBTreeNode<K, V> node, K key){
-        if (node == null){ //condition if the key doesn't exist
+        if (node == null || key == null){ //condition if the key doesn't exist
             return null;
         }
         List<K> keys = node.getKeys();
