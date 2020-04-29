@@ -3,6 +3,11 @@ package eg.edu.alexu.csd.filestructure.btree;
 import java.util.List;
 
 public class SearchEngine implements ISearchEngine {
+
+    public SearchEngine(){
+
+    }
+
     @Override
     public void indexWebPage(String filePath) {
 
