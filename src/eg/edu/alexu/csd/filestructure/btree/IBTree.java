@@ -2,12 +2,7 @@ package eg.edu.alexu.csd.filestructure.btree;
 
 public interface IBTree<K extends Comparable<K>, V> {
 
-	/**
-	 * Return the minimum degree of the given Btree. 
-	 * The minimum degree of the Btree is sent as a parameter t the constructor.
-	 * @return
-	 */
-	public int getMinimumDegree();
+    abstract int getMinimumDegree();
 	/**
 	 * Return the root of the given Btree.
 	 * @return
