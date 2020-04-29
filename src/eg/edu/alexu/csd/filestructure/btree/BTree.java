@@ -83,7 +83,18 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
 
     @Override
     public boolean delete(K key) {
-        return false;
+
+        // if key is not found in tree return false
+        if (search(key) == null) return false;
+
+        // Recursively iterating through the B-tree while preserving its properties
+        delete(this.root, key);
+
+        // if the root has no keys then the new root is the old root's only child
+        if (this.root.getKeys().isEmpty() && !this.root.isLeaf())
+            this.root = this.root.getChildren().get(0);
+
+        return true;
     }
 
     private IBTreeNode<K, V> findNodeSearch(IBTreeNode<K, V> node, K key) {
@@ -104,7 +115,14 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
                 }
             }
         }
-        return node;
+
+        // additional check for key in node if this node is leaf
+        if (node != null && node.isLeaf() && isKeyInCurrNode(node, key)) {
+            return node;
+        }
+        else {
+            return null;
+        }
     }
 
     private IBTreeNode<K, V> findNodeInsert(IBTreeNode<K, V> node, K key) {
@@ -282,5 +300,357 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
             return rightSplit;
         }
         return leftSplit;
+    }
+
+    private void delete(IBTreeNode<K, V> x, K key) {
+        if (x.isLeaf()) {   // case I: if the node is leaf then remove the key and the value
+            List<K> xKeys = x.getKeys();
+            List<V> xValues = x.getValues();
+
+            int index = xKeys.indexOf(key); // index of value in node's values
+            xKeys.remove(key);
+            xValues.remove(index);
+
+            x.setKeys(xKeys);
+            x.setValues(xValues);
+            return;
+        }
+
+        // if the node is internal node and key is found in it
+        if (isKeyInCurrNode(x, key)) {
+            internalFoundDelete(x, key);
+            return;
+        }
+
+        // if the node is internal node and key is not found in it
+        internalNotFoundDelete(x, key);
+    }
+
+    // case II: if the node is internal node and key is found in it
+    private void internalFoundDelete(IBTreeNode<K, V> x, K key) {
+
+        int index = x.getKeys().indexOf(key);   // index of value which equivalent to key
+
+        // get the predecessor child to current node
+        IBTreeNode<K, V> predChild = getPredChild(x, key);
+
+        // Check if the predecessor child has additional keys to compensate the deleted one from the parent node
+        if (predChild.getNumOfKeys() >= minimumDegree) {
+            K predKey = getPredKey(predChild);
+            V predValue = getPredValue(predChild);
+
+            // delete the predecessor key from tree before replacing the original deleted node by it
+            delete(predChild, key);
+            List<K> xKeys = x.getKeys();
+            List<V> xValues = x.getValues();
+
+            xKeys.set(index, predKey);    // replacing the deleted key by its predecessor
+            xValues.set(index, predValue);  // replacing the deleted value by its predecessor
+
+            x.setKeys(xKeys);
+            x.setValues(xValues);
+            return;
+        }
+
+        // get the successor child to current node
+        IBTreeNode<K, V> succChild = getSuccChild(x, key);
+
+        // Check if the successor child has additional keys to compensate the deleted one from the parent node
+        if (succChild.getNumOfKeys() >= minimumDegree) {
+            K succKey = getSuccKey(succChild);
+            V succValue = getSuccValue(succChild);
+
+            // delete the successor key from tree before replacing the original deleted node by it
+            delete(succChild, key);
+            List<K> xKeys = x.getKeys();
+            List<V> xValues = x.getValues();
+
+            xKeys.set(index, succKey);  // replacing the deleted key by its successor
+            xValues.set(index, succValue);  // replacing the deleted value by its successor
+
+            x.setKeys(xKeys);
+            x.setValues(xValues);
+            return;
+        }
+
+        // if none has additional keys then merge them with the target key to be deleted
+        merge(x, key, predChild, succChild);
+        delete(predChild, key);     // recursively move down to the merged node to delete the target key
+    }
+
+    // case III: if the node is internal node and key is not found in it
+    private void internalNotFoundDelete(IBTreeNode<K, V> x, K key) {
+
+        // get the subtree in which the key must be there to check its number of keys
+        IBTreeNode<K, V> subtree = getSubtree(x, key);
+
+        // if the subtree number of keys is small then it needs refactoring
+        if (subtree.getNumOfKeys() < minimumDegree) {
+
+            // the left or right sibling can lend the subtree some keys if it has additional ones
+            IBTreeNode<K, V> sibling = getImmediateSibling(x, subtree);
+
+            if (sibling != null) {  // if such sibling exists
+                moveKeys(x, subtree, sibling);
+            }
+            else {  // No sibling has additional keys
+
+                int index = getSiblingIndex(x, subtree);    // get index of any sibling
+                List<IBTreeNode<K, V>> xChildren = x.getChildren();
+
+                // check if this sibling is right or left sibling
+                boolean isRightSibling = index > 0 && xChildren.get(index - 1) == subtree;
+                sibling = xChildren.get(index);
+
+                // according to the position of the sibling, the merge of sibling, subtree and median key differs
+                K medianKey;
+                if (isRightSibling) {
+                    medianKey = x.getKeys().get(index - 1);
+                    merge(x, medianKey, subtree, sibling);
+                    delete(subtree, key);   // recursively move down to the merged node to delete the target key
+                }
+                else {
+                    medianKey = x.getKeys().get(index);
+                    merge(x, medianKey, sibling, subtree);
+                    delete(xChildren.get(index), key);
+                }
+            }
+        }
+
+        // recursively move down to the merged node to delete the target key
+        else {
+            delete(subtree, key);
+        }
+    }
+
+    // check if the key is found in this node
+    boolean isKeyInCurrNode(IBTreeNode<K, V> x, K key) {
+        List<K> keys = x.getKeys();
+        for (K k : keys) {
+            if (key.compareTo(k) == 0)
+                return true;
+        }
+        return false;
+    }
+
+    // get the predecessor child to this node
+    IBTreeNode<K, V> getPredChild(IBTreeNode<K, V> x, K key) {
+        List<K> keys = x.getKeys();
+        for (int i = 0; i < keys.size(); ++i) {
+            if (key.compareTo(keys.get(i)) == 0)
+                return x.getChildren().get(i);
+        }
+        return null;
+    }
+
+    // get the predecessor key by searching for the rightmost key in the this subtree
+    K getPredKey(IBTreeNode<K, V> predChild) {
+        int lastIndex;
+        if (predChild.isLeaf()) {
+            lastIndex = predChild.getKeys().size() - 1;
+            return predChild.getKeys().get(lastIndex);
+        }
+
+        lastIndex = predChild.getChildren().size() - 1;
+        getPredKey(predChild.getChildren().get(lastIndex));
+        return null;
+    }
+
+    // get the predecessor value by searching for the rightmost key in the this subtree
+    V getPredValue(IBTreeNode<K, V> predChild) {
+        int lastIndex;
+        if (predChild.isLeaf()) {
+            lastIndex = predChild.getKeys().size() - 1;
+            return predChild.getValues().get(lastIndex - 1);
+        }
+
+        lastIndex = predChild.getChildren().size() - 1;
+        getPredKey(predChild.getChildren().get(lastIndex));
+        return null;
+    }
+
+    // get the successor child to this node
+    IBTreeNode<K, V> getSuccChild(IBTreeNode<K, V> x, K key) {
+        List<K> keys = x.getKeys();
+        for (int i = 0; i < keys.size(); ++i) {
+            if (key.compareTo(keys.get(i)) == 0)
+                return x.getChildren().get(i + 1);
+        }
+        return null;
+    }
+
+    // get the successor key by searching for the leftmost key in the this subtree
+    K getSuccKey(IBTreeNode<K, V> succChild) {
+        int firstIndex = 0;
+        if (succChild.isLeaf()) {
+            return succChild.getKeys().get(firstIndex);
+        }
+
+        getSuccKey(succChild.getChildren().get(firstIndex));
+        return null;
+    }
+
+    // get the successor value by searching for the leftmost key in the this subtree
+    V getSuccValue(IBTreeNode<K, V> succChild) {
+        int firstIndex = 0;
+        if (succChild.isLeaf()) {
+            return succChild.getValues().get(firstIndex);
+        }
+
+        getSuccKey(succChild.getChildren().get(firstIndex));
+        return null;
+    }
+
+    // merge the addend node to the addedTo nodes with the key from parent
+    void merge(IBTreeNode<K, V> x, K key, IBTreeNode<K, V> addedTo, IBTreeNode<K, V> addend) {
+        int index;
+
+        // add key and value from parent to addedTo node keys
+        List<K> keysOfAddedTo = addedTo.getKeys();
+        index = x.getKeys().indexOf(key);
+        List<V> valuesOfAddedTo = addedTo.getValues();
+        keysOfAddedTo.add(key);
+        valuesOfAddedTo.add(x.getValues().get(index));
+
+        // then add the addend node keys
+        keysOfAddedTo.addAll(addend.getKeys());
+        valuesOfAddedTo.addAll(addend.getValues());
+        addedTo.setKeys(keysOfAddedTo);
+        addedTo.setValues(valuesOfAddedTo);
+
+        // after that, remove the key from the parent
+        List<K> keysOfX = x.getKeys();
+        List<V> valuesOfX = x.getValues();
+        index = keysOfX.indexOf(key);   // used in removing pointer to addend node
+        keysOfX.remove(key);
+        valuesOfX.remove(index);
+        x.setKeys(keysOfX);
+        x.setValues(valuesOfX);
+
+        // finally, remove the pointer to the addend node from parent
+        List<IBTreeNode<K, V>> childrenOfX = x.getChildren();
+        childrenOfX.remove(childrenOfX.get(index + 1));
+        x.setChildren(childrenOfX);
+    }
+
+    // get subtree in which key must exists
+    IBTreeNode<K, V> getSubtree(IBTreeNode<K, V> x, K key) {
+        List<K> keys = x.getKeys();
+        for (int i = 0; i < keys.size(); ++i) {
+            K k = keys.get(i);
+
+            if (key.compareTo(k) <= 0) {
+                return x.getChildren().get(i);
+            }
+            if (i == keys.size() - 1) {
+                return x.getChildren().get(i + 1);
+            }
+        }
+        return null;
+    }
+
+    // get a sibling with additional number of keys
+    IBTreeNode<K, V> getImmediateSibling(IBTreeNode<K, V> x, IBTreeNode<K, V> subtree) {
+        List<IBTreeNode<K, V>> xChildren = x.getChildren();
+        for (int i = 0; i < xChildren.size(); ++i) {
+            if (xChildren.get(i) == subtree) {
+
+                // left sibling with additional keys
+                if (i > 0 && xChildren.get(i - 1).getNumOfKeys() >= minimumDegree) {
+                    return xChildren.get(i - 1);
+                }
+                // right sibling with additional keys
+                else if (i != xChildren.size() - 1 && xChildren.get(i + 1).getNumOfKeys() >= minimumDegree) {
+                    return xChildren.get(i + 1);
+                }
+            }
+        }
+        return null;
+    }
+
+    // move key from parent to subtree to increase its number of keys to be equal to the minimum degree
+    // then replace the moved key in parent by an additional key in sibling
+    void moveKeys(IBTreeNode<K, V> x, IBTreeNode<K, V> subtree, IBTreeNode<K, V> sibling) {
+
+        int index = 0;  // used to store the index of key in parent to be replaced
+        boolean isRightSibling = false; // used to know the position of sibling
+
+        List<IBTreeNode<K, V>> xChildren = x.getChildren();
+        for (int i = 0; i < xChildren.size(); ++i) {
+            if (xChildren.get(i) == subtree) {
+                index = i;
+                isRightSibling = i != xChildren.size() - 1 && xChildren.get(i + 1) == sibling;
+                break;
+            }
+        }
+
+        if (isRightSibling) {
+
+            // move key and value from parent to subtree
+            List<K> xKeys = x.getKeys();
+            List<V> xValues = x.getValues();
+            K xKeyToBeMovedDown = xKeys.get(index);
+            V xValueToBeMovedDown = xValues.get(index);
+
+            // add moved down key and value then setting the new keys to subtree
+            List<K> subtreeKeys = subtree.getKeys();
+            List<V> subtreeValues = subtree.getValues();
+            subtreeKeys.add(xKeyToBeMovedDown);
+            subtreeValues.add(xValueToBeMovedDown);
+            subtree.setKeys(subtreeKeys);
+            subtree.setValues(subtreeValues);
+
+            // then replace the moved key and value in parent by an additional key in sibling
+            List<K> siblingKeys = sibling.getKeys();
+            List<V> siblingValues = sibling.getValues();
+            K siblingKeyToBeMovedUp = siblingKeys.remove(0);
+            V siblingValueToBeMovedUp = siblingValues.remove(0);
+            xKeys.set(index, siblingKeyToBeMovedUp);
+            xValues.set(index, siblingValueToBeMovedUp);
+            x.setKeys(xKeys);
+            x.setValues(xValues);
+            sibling.setKeys(siblingKeys);
+            sibling.setValues(siblingValues);
+        }
+        else {  // left sibling
+
+            // move key and value from parent to subtree
+            List<K> xKeys = x.getKeys();
+            List<V> xValues = x.getValues();
+            K xKeyToBeMovedDown = xKeys.get(index - 1);
+            V xValueToBeMovedDown = xValues.get(index - 1);
+
+            // add moved down key and value then setting the new keys to subtree
+            List<K> subtreeKeys = subtree.getKeys();
+            List<V> subtreeValues = subtree.getValues();
+            subtreeKeys.add(0, xKeyToBeMovedDown);
+            subtreeValues.add(0, xValueToBeMovedDown);
+            subtree.setKeys(subtreeKeys);
+            subtree.setValues(subtreeValues);
+
+            // then replace the moved key and value in parent by an additional key in sibling
+            List<K> siblingKeys = sibling.getKeys();
+            List<V> siblingValues = sibling.getValues();
+            K siblingKeyToBeMovedUp = siblingKeys.remove(siblingKeys.size() - 1);
+            V siblingValueToBeMovedUp = siblingValues.remove(siblingValues.size() - 1);
+            xKeys.set(index - 1, siblingKeyToBeMovedUp);
+            xValues.set(index - 1, siblingValueToBeMovedUp);
+            x.setKeys(xKeys);
+            x.setValues(xValues);
+            sibling.setKeys(siblingKeys);
+            sibling.setValues(siblingValues);
+        }
+    }
+
+    // get index of any sibling to this node
+    int getSiblingIndex(IBTreeNode<K, V> x, IBTreeNode<K, V> subtree) {
+        List<IBTreeNode<K, V>> xChildren = x.getChildren();
+        for (int i = 0; i < xChildren.size(); ++i) {
+            if (xChildren.get(i) == subtree) {
+                if (i != xChildren.size() - 1) return i + 1;
+                else return i - 1;
+            }
+        }
+        return 0;
     }
 }
