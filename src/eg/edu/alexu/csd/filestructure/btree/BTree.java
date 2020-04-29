@@ -6,7 +6,7 @@ import java.util.List;
 
 public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
 
-    private int minimumDegree;
+    private final int minimumDegree;
     private IBTreeNode<K, V> root;
     private final int MIN_KEYS;
     private final int MAX_KEYS;
@@ -453,21 +453,19 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
         }
 
         lastIndex = predChild.getChildren().size() - 1;
-        getPredKey(predChild.getChildren().get(lastIndex));
-        return null;
+        return getPredKey(predChild.getChildren().get(lastIndex));
     }
 
     // get the predecessor value by searching for the rightmost key in the this subtree
     V getPredValue(IBTreeNode<K, V> predChild) {
         int lastIndex;
         if (predChild.isLeaf()) {
-            lastIndex = predChild.getKeys().size() - 1;
+            lastIndex = predChild.getValues().size() - 1;
             return predChild.getValues().get(lastIndex - 1);
         }
 
         lastIndex = predChild.getChildren().size() - 1;
-        getPredKey(predChild.getChildren().get(lastIndex));
-        return null;
+        return getPredValue(predChild.getChildren().get(lastIndex));
     }
 
     // get the successor child to this node
@@ -487,8 +485,7 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
             return succChild.getKeys().get(firstIndex);
         }
 
-        getSuccKey(succChild.getChildren().get(firstIndex));
-        return null;
+        return getSuccKey(succChild.getChildren().get(firstIndex));
     }
 
     // get the successor value by searching for the leftmost key in the this subtree
@@ -498,8 +495,7 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
             return succChild.getValues().get(firstIndex);
         }
 
-        getSuccKey(succChild.getChildren().get(firstIndex));
-        return null;
+        return getSuccValue(succChild.getChildren().get(firstIndex));
     }
 
     // merge the addend node to the addedTo nodes with the key from parent
