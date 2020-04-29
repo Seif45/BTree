@@ -13,7 +13,7 @@ public class BTreeNode<K extends Comparable<K>, V> implements IBTreeNode<K, V> {
 
     @Override
     public int getNumOfKeys() {
-        return this.numOfKeys;
+        return this.keys.size();
     }
 
     @Override

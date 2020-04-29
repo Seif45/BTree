@@ -340,7 +340,7 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
             V predValue = getPredValue(predChild);
 
             // delete the predecessor key from tree before replacing the original deleted node by it
-            delete(predChild, key);
+            delete(predChild, predKey);
             List<K> xKeys = x.getKeys();
             List<V> xValues = x.getValues();
 
@@ -361,7 +361,7 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
             V succValue = getSuccValue(succChild);
 
             // delete the successor key from tree before replacing the original deleted node by it
-            delete(succChild, key);
+            delete(succChild, succKey);
             List<K> xKeys = x.getKeys();
             List<V> xValues = x.getValues();
 
@@ -392,6 +392,7 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
 
             if (sibling != null) {  // if such sibling exists
                 moveKeys(x, subtree, sibling);
+                delete(subtree, key);
             }
             else {  // No sibling has additional keys
 
@@ -412,7 +413,7 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
                 else {
                     medianKey = x.getKeys().get(index);
                     merge(x, medianKey, sibling, subtree);
-                    delete(xChildren.get(index), key);
+                    delete(sibling, key);
                 }
             }
         }
@@ -518,6 +519,14 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
         addedTo.setKeys(keysOfAddedTo);
         addedTo.setValues(valuesOfAddedTo);
 
+        // add the children pointers if the nodes are internal nodes
+        if (!addedTo.isLeaf()) {
+            List<IBTreeNode<K, V>> addendChildren = addend.getChildren();
+            List<IBTreeNode<K, V>> addedToChildren = addedTo.getChildren();
+            addedToChildren.addAll(addendChildren);
+            addedTo.setChildren(addedToChildren);
+        }
+
         // after that, remove the key from the parent
         List<K> keysOfX = x.getKeys();
         List<V> valuesOfX = x.getValues();
@@ -611,6 +620,16 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
             x.setValues(xValues);
             sibling.setKeys(siblingKeys);
             sibling.setValues(siblingValues);
+
+            // finally moving the appropriate child pointer from sibling to subtree, if they are internal nodes
+            if (!subtree.isLeaf()) {
+                List<IBTreeNode<K, V>> siblingChildren = sibling.getChildren();
+                IBTreeNode<K, V> childPt = siblingChildren.remove(0);
+                List<IBTreeNode<K, V>> subtreeChildren = subtree.getChildren();
+                subtreeChildren.add(childPt);
+                sibling.setChildren(siblingChildren);
+                subtree.setChildren(subtreeChildren);
+            }
         }
         else {  // left sibling
 
@@ -639,6 +658,16 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
             x.setValues(xValues);
             sibling.setKeys(siblingKeys);
             sibling.setValues(siblingValues);
+
+            // finally moving the appropriate child pointer from sibling to subtree, if they are internal nodes
+            if (!subtree.isLeaf()) {
+                List<IBTreeNode<K, V>> siblingChildren = sibling.getChildren();
+                IBTreeNode<K, V> childPt = siblingChildren.remove(siblingChildren.size() - 1);
+                List<IBTreeNode<K, V>> subtreeChildren = subtree.getChildren();
+                subtreeChildren.add(0, childPt);
+                sibling.setChildren(siblingChildren);
+                subtree.setChildren(subtreeChildren);
+            }
         }
     }
 
