@@ -16,8 +16,8 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
             throw new RuntimeErrorException(new Error());
         }
         this.minimumDegree = minimumDegree;
-        MIN_KEYS = minimumDegree - 1;
-        MAX_KEYS = minimumDegree * 2 - 1;
+        MIN_KEYS = minimumDegree - 1; //min number of keys allowed in one node
+        MAX_KEYS = minimumDegree * 2 - 1; //max number of keys allowed in one node
     }
 
     @Override
@@ -32,13 +32,13 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
 
     @Override
     public void insert(K key, V value) {
-        if (key == null || value == null){
+        if (key == null || value == null){ //invalid input
             throw new RuntimeErrorException(new Error());
         }
-        if (search(key) != null){
+        if (search(key) != null){ //already exists
             return;
         }
-        if (this.root == null){
+        if (this.root == null){ //tree is empty
             IBTreeNode<K, V> newRoot = new BTreeNode<>();
             List<K> keys = new ArrayList<>();
             List<V> values = new ArrayList<>();
@@ -49,14 +49,14 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
             newRoot.setValues(values);
             newRoot.setNumOfKeys(keys.size());
             newRoot.setChildren(children);
-            newRoot.setLeaf(true);
+            newRoot.setLeaf(true); //the root of the tree is also a leaf
             this.root = newRoot;
             return;
         }
-        IBTreeNode<K, V> insertInto = findNodeInsert(this.root, key);
+        IBTreeNode<K, V> insertInto = findNodeInsert(this.root, key); //find the node to insert into
         List<K> keys = insertInto.getKeys();
         int i;
-        for (i = 0 ; i < insertInto.getNumOfKeys(); i++){
+        for (i = 0 ; i < insertInto.getNumOfKeys(); i++){ //find the right to place to insert into inside the node
             if (key.compareTo(keys.get(i)) < 0){
                 break;
             }
@@ -68,17 +68,17 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
 
     @Override
     public V search(K key) {
-        if (key == null) {
+        if (key == null) { //invalid input
             throw new RuntimeErrorException(new Error());
         }
         IBTreeNode<K, V> found = findNodeSearch(this.root, key); //find the node that contains the key
-        if (found == null) {
+        if (found == null) { //not found
             return null;
         }
         if (found.getKeys().contains(key)){
             return found.getValues().get(found.getKeys().indexOf(key)); //return suitable value according to the key
         }
-        return null;
+        return null; //not found in the leaf
     }
 
     @Override
@@ -108,29 +108,29 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
     }
 
     private IBTreeNode<K, V> findNodeInsert(IBTreeNode<K, V> node, K key) {
-        if (node.getNumOfKeys() == MAX_KEYS){
+        if (node.getNumOfKeys() == MAX_KEYS){ //the root is full and needs to be split
             splitRoot(node);
             node = this.root;
         }
         while (!node.isLeaf()) {
             List<K> keys = node.getKeys();
-            for (int i = 0; i < keys.size(); i++) {
+            for (int i = 0; i < keys.size(); i++){
                 K k = keys.get(i);
-                if (key.compareTo(k) < 0) {
+                if (key.compareTo(k) < 0) { //traverse through left child
                     List<IBTreeNode<K, V>> children = node.getChildren();
                     IBTreeNode<K, V> child = children.get(i);
                     if (child.getNumOfKeys() == MAX_KEYS){ //split if left child is full
                         child = split(node, child, key);
                     }
-                    node = child; //traverse through left child
+                    node = child;
                     break;
-                } else if (i == keys.size() - 1) {
+                } else if (i == keys.size() - 1) { //traverse throught the most right child
                     List<IBTreeNode<K, V>> children = node.getChildren();
                     IBTreeNode<K, V> child = children.get(i+1);
-                    if (child.getNumOfKeys() == MAX_KEYS){ //split if right child is full
+                    if (child.getNumOfKeys() == MAX_KEYS){ //split if the most right child is full
                        child = split(node, child, key);
                     }
-                    node = child; //traverse through right child
+                    node = child;
                     break;
                 }
             }
@@ -141,13 +141,16 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
     private void splitRoot (IBTreeNode<K, V> node){
         List<K> keys = node.getKeys();
         List<V> values = node.getValues();
+        List<IBTreeNode<K, V>> children = node.getChildren();
+
         IBTreeNode<K, V> newRoot = new BTreeNode<>();
         IBTreeNode<K, V> leftSplit = new BTreeNode<>();
         IBTreeNode<K, V> rightSplit = new BTreeNode<>();
+
         List<K> newKeys = new ArrayList<>();
         List<V> newValues = new ArrayList<>();
-        List<IBTreeNode<K, V>> children = node.getChildren();
         List<IBTreeNode<K, V>> newChildren = new ArrayList<>();
+
         if(node.isLeaf()){
             leftSplit.setLeaf(true);
             rightSplit.setLeaf(true);
@@ -160,17 +163,19 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
                 newChildren.add(children.get(i));
             }
         }
-        if(!node.isLeaf()){
+        if(!node.isLeaf()){ //assign the new leaves
             newChildren.add(children.get(i));
         }
         leftSplit.setKeys(newKeys);
         leftSplit.setValues(newValues);
         leftSplit.setChildren(newChildren);
         leftSplit.setNumOfKeys(newKeys.size());
+
         newKeys = new ArrayList<>();
         newValues = new ArrayList<>();
         newChildren = new ArrayList<>();
-        newKeys.add(keys.get(i));  //the middle item
+
+        newKeys.add(keys.get(i));  //the middle item of the split
         newValues.add(values.get(i));
         newChildren.add(leftSplit);
         newChildren.add(rightSplit);
@@ -178,11 +183,13 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
         newRoot.setValues(newValues);
         newRoot.setChildren(newChildren);
         newRoot.setNumOfKeys(newKeys.size());
+
         newKeys = new ArrayList<>();
         newValues = new ArrayList<>();
         newChildren = new ArrayList<>();
+
         i++;
-        for (; i < node.getNumOfKeys(); i++){ //the right side
+        for (; i < node.getNumOfKeys(); i++){ //the right side of the split
             newKeys.add(keys.get(i));
             newValues.add(values.get(i));
             if(!node.isLeaf()){
@@ -202,13 +209,16 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
     private IBTreeNode<K, V> split (IBTreeNode<K, V> node, IBTreeNode<K, V> child, K key){
         IBTreeNode<K, V> leftSplit = new BTreeNode<>();
         IBTreeNode<K, V> rightSplit = new BTreeNode<>();
+
         List<K> keys = child.getKeys();
         List<V> values = child.getValues();
         List<IBTreeNode<K, V>> children = child.getChildren();
+
         List<K> newKeys = new ArrayList<>();
         List<V> newValues = new ArrayList<>();
         List<IBTreeNode<K, V>> newChildren = new ArrayList<>();
-        if (child.isLeaf()){
+
+        if (child.isLeaf()){ //assign the new leaves
             leftSplit.setLeaf(true);
             rightSplit.setLeaf(true);
         }
@@ -228,7 +238,7 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
         leftSplit.setChildren(newChildren);
         leftSplit.setNumOfKeys(newKeys.size());
 
-        newKeys = node.getKeys();
+        newKeys = node.getKeys(); //middle item of the split
         newValues = node.getValues();
         newChildren = node.getChildren();
         int j;
@@ -251,8 +261,9 @@ public class BTree<K extends Comparable<K>, V> implements IBTree<K, V> {
         newKeys = new ArrayList<>();
         newValues = new ArrayList<>();
         newChildren = new ArrayList<>();
+
         i++;
-        for (; i < child.getNumOfKeys() ; i++){ //left side of the split
+        for (; i < child.getNumOfKeys() ; i++){ //right side of the split
             newKeys.add(keys.get(i));
             newValues.add(values.get(i));
             if(!child.isLeaf()){
