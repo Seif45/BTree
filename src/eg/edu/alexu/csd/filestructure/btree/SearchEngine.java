@@ -13,27 +13,88 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class SearchEngine implements ISearchEngine {
-    private final List<String> IDs=new ArrayList<>();
+    /**private final List<String> IDs=new ArrayList<>();
     private final List<IBTree<String,Integer>> rankWords=new ArrayList<>();
     private int minDegree;
     public SearchEngine(int min){
         minDegree=min;
+    }*/
+
+    private List<BTree> files;
+
+    public SearchEngine(){
+        this.files=new ArrayList<>();
     }
 
+
+    List readFile(String filePath) throws ParserConfigurationException, IOException, SAXException {
+        File file = new File(filePath);
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document document = builder.parse(file);
+        List<Webpage> webpages = new ArrayList<Webpage>();
+        NodeList nodeList = document.getDocumentElement().getChildNodes();
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Node node = nodeList.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                String docTitle = node.getAttributes().getNamedItem("title").getNodeValue();
+                String url = node.getAttributes().getNamedItem("url").getNodeValue();
+                String ID = node.getAttributes().getNamedItem("id").getNodeValue();
+                long id = Long.parseLong(ID);
+                String value = node.getTextContent();
+
+                webpages.add(new Webpage(docTitle, url, id, value));
+            }
+        }
+        return webpages;
+    }
 
     @Override
     public void indexWebPage(String filePath) {
         if(isNullOrEmpty(filePath)){
             throw new RuntimeErrorException(new Error());
         }
+
         File file =  new File(filePath);
         if(!file.exists()){
             throw new RuntimeErrorException(new Error());
         }
-        DocumentBuilderFactory factory=DocumentBuilderFactory.newInstance();
+
+        List<Webpage> webpages = new ArrayList<Webpage>();
+
+        try {
+            webpages = readFile(filePath);
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        }
+        BTree indexes = new BTree(64);
+        for(int i=0; i<webpages.size(); i++){
+            String[] words =  webpages.get(i).getValue().replaceAll("\n"," ").split(" ");
+            BTree WordTree = new BTree(128);
+            for(int j = 0; j<words.length; j++){
+                if(words[j].equals("")){
+                    continue;
+                }
+                if(WordTree.search(words[j])==null){
+                    WordTree.insert(words[j], 1);
+                }else{
+                    int rank = ((int)WordTree.search(words[j]))+1;
+                    WordTree.delete(words[j]);
+                    WordTree.insert(words[j],rank);
+                }
+            }
+            indexes.insert((Comparable) webpages.get(i).getIndex(), WordTree);
+        }
+        files.add(indexes);
+        /*DocumentBuilderFactory factory=DocumentBuilderFactory.newInstance();
         try {
             DocumentBuilder parser=factory.newDocumentBuilder();
             try {
@@ -109,7 +170,7 @@ public class SearchEngine implements ISearchEngine {
             }
         } catch (ParserConfigurationException e) {
             e.printStackTrace();
-        }
+        }*/
 
     }
 
