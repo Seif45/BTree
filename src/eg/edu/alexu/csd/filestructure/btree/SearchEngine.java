@@ -53,12 +53,11 @@ public class SearchEngine implements ISearchEngine {
                         String tmp = "";
                         int flag = 0;
                         for (int k = 0; k < y.length(); k++) {
-                            if (k != y.length() && y.charAt(k) == ' ') {
+                            if (k != y.length() && y.charAt(k) == ' '||y.charAt(k)=='\n') {
                                 int c = 1;
-
                                 int s = k + 1;
                                 while (true) {
-                                    if (y.charAt(s) != ' ') {
+                                    if (y.charAt(s) != ' '&&y.charAt(s)!='\n') {
                                         break;
                                     }
                                     if (s == y.length() - 1) {
@@ -71,22 +70,18 @@ public class SearchEngine implements ISearchEngine {
                                 }
                                 if (flag != 1) {
                                     if (k == 0) {
-                                        k += c;
+                                        k += c-1;
                                     } else {
-                                        tmp += y.charAt(k);
+                                        tmp += " ";
                                         if (c > 1) {
-                                            k += c;
+                                            k += c-1;
                                         } else {
-                                            k++;
+                                            continue;
                                         }
                                     }
                                 }
-                            } else if (y.charAt(k) == '\n') {
-                                tmp += ' ';
-                                k++;
                             } else {
                                 tmp += y.charAt(k);
-                                k++;
                             }
                         }
                         if (flag != 1) {
