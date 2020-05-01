@@ -5,9 +5,9 @@ import java.net.URL;
 public class Webpage {
     private String docTitle;
     private String url;
-    private long id;
+    private String id;
     private String value;
-    public Webpage(String docTitle, String url, long id, String value){
+    public Webpage(String docTitle, String url, String id, String value){
         this.docTitle = docTitle;
         this.url = url;
         this.id = id;
@@ -15,5 +15,5 @@ public class Webpage {
     }
     public String getValue(){return this.value;}
 
-    public Object getIndex() {return this.id;}
+    public String getIndex() {return this.id;}
 }

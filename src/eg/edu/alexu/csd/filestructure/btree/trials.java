@@ -19,9 +19,9 @@ import org.xml.sax.SAXException;
 public class trials{
     public static void main(String[] args) throws ParserConfigurationException, IOException, SAXException {
 
-        String file = "C:\\Users\\Adel\\Desktop\\CS223\\Lab3\\BTree\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00";
-        //SearchEngine searchEngine = new SearchEngine(16);
-        //searchEngine.indexWebPage(file);
+        String file = "res\\wiki_01.xml";
+        SearchEngine searchEngine = new SearchEngine(64);
+        searchEngine.indexWebPage(file);
 
        /* //search.indexWebPage("C:\\Users\\Adel\\Desktop\\CS223\\Lab3\\BTree\\Wikipedia Data Sample\\Wikipedia Data Sample\\wiki_00");
         //System.out.println(10);
@@ -63,6 +63,8 @@ public class trials{
 
            String[] words =  webpages.get(0).getValue().replaceAll("\n"," ").split(" ");*/
 
+        System.out.println(10);
+        List<ISearchResult> actual = searchEngine.searchByWordWithRanking("Cuba");
         System.out.println(10);
     }
 }

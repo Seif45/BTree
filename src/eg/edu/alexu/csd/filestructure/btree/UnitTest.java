@@ -756,10 +756,50 @@ public class UnitTest {
 		 * 3- lower case, upper case, mix btw lower and upper, e.g.. THE, the, ThE, tHE....
 		 * According to each change you should modify the expected variable to have the expected outcome.
 		 */
+		searchEngine.indexWebPage("res\\wiki_00");
 		try {
-			searchEngine.indexWebPage("res\\wiki_00");
-			List<ISearchResult> expected = Arrays.asList(new SearchResult[]{new SearchResult("7697605", 1), new SearchResult("7697611", 8)});
-			List<ISearchResult> actual = searchEngine.searchByWordWithRanking("THISISTESTWord");
+			List<ISearchResult> expected = new ArrayList<>();
+			List<ISearchResult> actual = searchEngine.searchByWordWithRanking("APKSnsixISJWElkasl1");
+			for (ISearchResult searchRes : actual) {
+				System.out.println(searchRes.toString());
+			}
+			Collections.sort(actual, new Comparator<ISearchResult>() {
+				@Override
+				public int compare(ISearchResult o1, ISearchResult o2) {
+					return o1.getRank() - o2.getRank();
+				}
+			});
+
+			for (int i = 0; i < expected.size(); i++) {
+				Assert.assertEquals(expected.get(i).getId(), actual.get(i).getId());
+				Assert.assertEquals(expected.get(i).getRank(), actual.get(i).getRank());
+			}
+		} catch (Throwable e) {
+			TestRunner.fail("Fail to index web page", e);
+		}
+		try {
+			List<ISearchResult> expected = Arrays.asList(new SearchResult[]{new SearchResult("7697605", 3)});
+			List<ISearchResult> actual = searchEngine.searchByWordWithRanking("KoNiCa");
+			for (ISearchResult searchRes : actual) {
+				System.out.println(searchRes.toString());
+			}
+			Collections.sort(actual, new Comparator<ISearchResult>() {
+				@Override
+				public int compare(ISearchResult o1, ISearchResult o2) {
+					return o1.getRank() - o2.getRank();
+				}
+			});
+
+			for (int i = 0; i < expected.size(); i++) {
+				Assert.assertEquals(expected.get(i).getId(), actual.get(i).getId());
+				Assert.assertEquals(expected.get(i).getRank(), actual.get(i).getRank());
+			}
+		} catch (Throwable e) {
+			TestRunner.fail("Fail to index web page", e);
+		}
+		try {
+			List<ISearchResult> expected = Arrays.asList(new SearchResult[]{new SearchResult("7701470", 2), new SearchResult("7697655", 4)});
+			List<ISearchResult> actual = searchEngine.searchByWordWithRanking("SwiSs");
 			for (ISearchResult searchRes : actual) {
 				System.out.println(searchRes.toString());
 			}
@@ -823,10 +863,32 @@ public class UnitTest {
 		 * 3- lower case, upper case, mix btw lower and upper, e.g.. THE, the, ThE, tHE....
 		 * According to each change you should modify the expected variable to have the expected outcome.
 		 */
+		searchEngine.indexDirectory("res");
 		try {
-			searchEngine.indexDirectory("res");
-			List<ISearchResult> expected = Arrays.asList(new SearchResult[]{new SearchResult("7697605", 1), new SearchResult("7702780", 3), new SearchResult("7697611", 8)});
-			List<ISearchResult> actual = searchEngine.searchByWordWithRanking("THISISTESTWord");
+			List<ISearchResult> expected = new ArrayList<>();
+			List<ISearchResult> actual = searchEngine.searchByWordWithRanking("MiwnSInqO");
+			for (ISearchResult searchRes : actual) {
+				System.out.println(searchRes.toString());
+			}
+			Collections.sort(actual, new Comparator<ISearchResult>() {
+				@Override
+				public int compare(ISearchResult o1, ISearchResult o2) {
+					return o1.getRank() - o2.getRank();
+				}
+			});
+
+			for (int i = 0; i < expected.size(); i++) {
+				Assert.assertEquals(expected.get(i).getId(), actual.get(i).getId());
+				Assert.assertEquals(expected.get(i).getRank(), actual.get(i).getRank());
+			}
+		} catch (Throwable e) {
+			TestRunner.fail("Fail to index directory", e);
+		}
+		try {
+			List<ISearchResult> expected = Arrays.asList(new SearchResult[]{ new SearchResult("7698798", 1),new SearchResult("7734583", 1),
+					new SearchResult("7741920", 1),new SearchResult("7743684", 1), new SearchResult("7697626", 2),
+					new SearchResult("7712922", 4), new SearchResult("7723686", 8),new SearchResult("7711850", 20)});
+			List<ISearchResult> actual = searchEngine.searchByWordWithRanking("RiCkY");
 			for (ISearchResult searchRes : actual) {
 				System.out.println(searchRes.toString());
 			}
@@ -863,10 +925,32 @@ public class UnitTest {
 		 * 3- lower case, upper case, mix btw lower and upper, e.g.. THE, the, ThE, tHE....
 		 * According to each change you should modify the expected variable to have the expected outcome.
 		 */
+		searchEngine.indexDirectory("resComplex");
 		try {
-			searchEngine.indexDirectory("res");
-			List<ISearchResult> expected = Arrays.asList(new SearchResult[]{new SearchResult("7712144", 1), new SearchResult("7708196", 2)});
-			List<ISearchResult> actual = searchEngine.searchByWordWithRanking("THISIStESTWORDFORSUBFOLDER");
+			List<ISearchResult> expected = new ArrayList<>();
+			List<ISearchResult> actual = searchEngine.searchByWordWithRanking("MiwnSInqO");
+			for (ISearchResult searchRes : actual) {
+				System.out.println(searchRes.toString());
+			}
+			Collections.sort(actual, new Comparator<ISearchResult>() {
+				@Override
+				public int compare(ISearchResult o1, ISearchResult o2) {
+					return o1.getRank() - o2.getRank();
+				}
+			});
+
+			for (int i = 0; i < expected.size(); i++) {
+				Assert.assertEquals(expected.get(i).getId(), actual.get(i).getId());
+				Assert.assertEquals(expected.get(i).getRank(), actual.get(i).getRank());
+			}
+		} catch (Throwable e) {
+			TestRunner.fail("Fail to index directory", e);
+		}
+		try {
+			List<ISearchResult> expected = Arrays.asList(new SearchResult[]{ new SearchResult("7698798", 1),new SearchResult("7734583", 1),
+					new SearchResult("7741920", 1),new SearchResult("7743684", 1), new SearchResult("7697626", 2),
+					new SearchResult("7712922", 4), new SearchResult("7723686", 8),new SearchResult("7711850", 20)});
+			List<ISearchResult> actual = searchEngine.searchByWordWithRanking("RiCkY");
 			for (ISearchResult searchRes : actual) {
 				System.out.println(searchRes.toString());
 			}
@@ -929,11 +1013,11 @@ public class UnitTest {
 		 * 3- lower case, upper case, mix btw lower and upper, e.g.. THE, the, ThE, tHE....
 		 * According to each change you should modify the expected variable to have the expected outcome.
 		 */
+		searchEngine.indexDirectory("res");
+		searchEngine.deleteWebPage("res\\wiki_00");
 		try {
-			searchEngine.indexDirectory("res");
-			searchEngine.deleteWebPage("res\\wiki_00");
-			List<ISearchResult> expected = Arrays.asList(new SearchResult[]{new SearchResult("7702780", 1)});
-			List<ISearchResult> actual = searchEngine.searchByWordWithRanking("DELETEWORD");
+			List<ISearchResult> expected = new ArrayList<>();
+			List<ISearchResult> actual = searchEngine.searchByWordWithRanking("KoNiCa");
 			for (ISearchResult searchRes : actual) {
 				System.out.println(searchRes.toString());
 			}
@@ -969,11 +1053,11 @@ public class UnitTest {
 		 * According to each change you should modify the expected variable to have the expected outcome.
 		 */
 		try {
-			searchEngine.indexWebPage("res\\wiki_00");
-			searchEngine.indexWebPage("res\\subfolder\\wiki_02");
-			searchEngine.deleteWebPage("res\\wiki_01");
-			List<ISearchResult> expected = Arrays.asList(new SearchResult[]{new SearchResult("7697611", 1)});
-			List<ISearchResult> actual = searchEngine.searchByWordWithRanking("testDeleteWebPageUnIndexedWebPage");
+			searchEngine.indexWebPage("resSub\\wiki_00");
+			searchEngine.indexWebPage("resSub\\subfolder\\wiki_02");
+			searchEngine.deleteWebPage("resSub\\wiki_01");
+			List<ISearchResult> expected = Arrays.asList(new SearchResult[]{new SearchResult("7708951", 1)});
+			List<ISearchResult> actual = searchEngine.searchByWordWithRanking("CuBA");
 			for (ISearchResult searchRes : actual) {
 				System.out.println(searchRes.toString());
 			}
@@ -1001,12 +1085,12 @@ public class UnitTest {
 		ISearchEngine searchEngine = (ISearchEngine) TestRunner.getImplementationInstanceForInterface(ISearchEngine.class, new Object[]{100});
 
 		try {
-			searchEngine.indexWebPage("res\\wiki_00");
-			searchEngine.indexWebPage("res\\wiki_01");
-			searchEngine.indexWebPage("res\\subfolder\\wiki_02");
-			searchEngine.deleteWebPage("res\\wiki_01");
-			searchEngine.deleteWebPage("res\\subfolder\\wiki_02");
-			searchEngine.deleteWebPage("res\\wiki_00");
+			searchEngine.indexWebPage("resSub\\wiki_00");
+			searchEngine.indexWebPage("resSub\\wiki_01");
+			searchEngine.indexWebPage("resSub\\subfolder\\wiki_02");
+			searchEngine.deleteWebPage("resSub\\wiki_01");
+			searchEngine.deleteWebPage("resSub\\subfolder\\wiki_02");
+			searchEngine.deleteWebPage("resSub\\wiki_00");
 
 			List<ISearchResult> actual = searchEngine.searchByWordWithRanking("ThE");
 			Assert.assertEquals(0, actual.size());
@@ -1074,10 +1158,33 @@ public class UnitTest {
 		 * 2- multiple words with some of them not in the tree.
 		 * According to each change you should modify the expected variable to have the expected outcome.
 		 */
+		searchEngine.indexDirectory("res");
 		try {
-			searchEngine.indexDirectory("res");
-			List<ISearchResult> expected = Arrays.asList(new SearchResult[]{new SearchResult("7702780", 1), new SearchResult("7697611", 3)});
-			List<ISearchResult> actual = searchEngine.searchByMultipleWordWithRanking(" word1d word2d     word3d 	");
+			List<ISearchResult> expected = Arrays.asList(new SearchResult[]{new SearchResult("7697605", 3),new SearchResult("7697605", 3)});
+			List<ISearchResult> actual = searchEngine.searchByMultipleWordWithRanking(" KoNiCa                  MiNoLtA    KSnakchwudhask");
+			for (ISearchResult searchRes : actual) {
+				System.out.println(searchRes.toString());
+			}
+			Collections.sort(actual, new Comparator<ISearchResult>() {
+				@Override
+				public int compare(ISearchResult o1, ISearchResult o2) {
+					return o1.getRank() - o2.getRank();
+				}
+			});
+
+			for (int i = 0; i < expected.size(); i++) {
+				Assert.assertEquals(expected.get(i).getId(), actual.get(i).getId());
+				Assert.assertEquals(expected.get(i).getRank(), actual.get(i).getRank());
+			}
+		} catch (Throwable e) {
+			TestRunner.fail("Fail to index directory", e);
+		}
+		try {
+			List<ISearchResult> expected = Arrays.asList(new SearchResult[]{ new SearchResult("7698798", 1),new SearchResult("7734583", 1),
+					new SearchResult("7741920", 1),new SearchResult("7743684", 1), new SearchResult("7697626", 2),
+					new SearchResult("7697605", 3),new SearchResult("7712922", 4), new SearchResult("7723686", 8),new SearchResult("7711850", 20)
+			});
+			List<ISearchResult> actual = searchEngine.searchByMultipleWordWithRanking(" KoNica            RIcKy");
 			for (ISearchResult searchRes : actual) {
 				System.out.println(searchRes.toString());
 			}

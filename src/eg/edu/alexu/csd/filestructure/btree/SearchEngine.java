@@ -15,17 +15,12 @@ import java.io.IOException;
 import java.util.*;
 
 public class SearchEngine implements ISearchEngine {
-    /**private final List<String> IDs=new ArrayList<>();
-    private final List<IBTree<String,Integer>> rankWords=new ArrayList<>();
-    private int minDegree;
-    public SearchEngine(int min){
-        minDegree=min;
-    }*/
+    private List <HashMap>files;
+    private List <String>paths;
 
-    private HashMap<String, HashMap> files;
-
-    public SearchEngine(){
-        this.files=new HashMap();
+    public SearchEngine(int n){
+        this.files = new ArrayList<>();
+        this.paths = new ArrayList<>();
     }
 
 
@@ -42,10 +37,9 @@ public class SearchEngine implements ISearchEngine {
                 String docTitle = node.getAttributes().getNamedItem("title").getNodeValue();
                 String url = node.getAttributes().getNamedItem("url").getNodeValue();
                 String ID = node.getAttributes().getNamedItem("id").getNodeValue();
-                long id = Long.parseLong(ID);
                 String value = node.getTextContent();
 
-                webpages.add(new Webpage(docTitle, url, id, value));
+                webpages.add(new Webpage(docTitle, url, ID, value));
             }
         }
         return webpages;
@@ -73,7 +67,7 @@ public class SearchEngine implements ISearchEngine {
         } catch (SAXException e) {
             e.printStackTrace();
         }
-        HashMap indexes = new HashMap();
+        HashMap<String, BTree> indexes = new HashMap();
         for(int i=0; i<webpages.size(); i++){
             String[] words =  webpages.get(i).getValue().replaceAll("\n"," ").toLowerCase().split(" ");
             BTree WordTree = new BTree(128);
@@ -91,85 +85,8 @@ public class SearchEngine implements ISearchEngine {
             }
             indexes.put(webpages.get(i).getIndex(), WordTree);
         }
-        files.put(filePath,indexes);
-        /*DocumentBuilderFactory factory=DocumentBuilderFactory.newInstance();
-        try {
-            DocumentBuilder parser=factory.newDocumentBuilder();
-            try {
-                Document doc= parser.parse(file);
-                NodeList parts = doc.getElementsByTagName("doc");
-                for (int i=0;i<parts.getLength();i++){
-                    Node x = parts.item(i);
-                    if(x.getNodeType()==Node.ELEMENT_NODE) {
-                        Element t = (Element) x;
-                        IDs.add(t.getAttribute("id"));
-                        NodeList txt = t.getChildNodes();
-                        for(int m=0;m<txt.getLength();m++){
-
-                        Node r = txt.item(m);
-                        String y = r.getTextContent();
-                        IBTree IDtree = new BTree(minDegree);
-                        String tmp = "";
-                        int flag = 0;
-                        for (int k = 0; k < y.length(); k++) {
-                            if (k != y.length() && y.charAt(k) == ' '||y.charAt(k)=='\n') {
-                                int c = 1;
-                                int s = k + 1;
-                                while (true) {
-                                    if (y.charAt(s) != ' '&&y.charAt(s)!='\n') {
-                                        break;
-                                    }
-                                    if (s == y.length() - 1) {
-                                        y = tmp;
-                                        flag = 1;
-                                        break;
-                                    }
-                                    s++;
-                                    c++;
-                                }
-                                if (flag != 1) {
-                                    if (k == 0) {
-                                        k += c-1;
-                                    } else {
-                                        tmp += " ";
-                                        if (c > 1) {
-                                            k += c-1;
-                                        } else {
-                                            continue;
-                                        }
-                                    }
-                                }
-                            } else {
-                                tmp += y.charAt(k);
-                            }
-                        }
-                        if (flag != 1) {
-                            y = tmp;
-                        }
-                        String[] words = y.split(" ");
-                        for (int j = 0; j < words.length; i++) {
-                            Object v = IDtree.search(words[j]);
-                            if (v == null) {
-                                IDtree.insert(words[j], 1);
-                            } else {
-                                int rank = (int) v;
-                                IDtree.delete(words[j]);
-                                IDtree.insert(words[j], rank++);
-                            }
-                        }
-                        rankWords.add(IDtree);
-                    }
-                    }
-                }
-            } catch (SAXException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        }*/
-
+        paths.add(file.getPath());
+        files.add(indexes);
     }
 
     @Override
@@ -182,7 +99,11 @@ public class SearchEngine implements ISearchEngine {
             throw new RuntimeErrorException(new Error());
         }
         for(int i =0; i<directory.listFiles().length; i++){
-            indexWebPage(directory.listFiles()[i].getPath());
+            if(directory.listFiles()[i].isDirectory()){
+                indexDirectory(directory.listFiles()[i].getPath());
+            }else{
+                indexWebPage(directory.listFiles()[i].getPath());
+            }
         }
     }
 
@@ -195,10 +116,10 @@ public class SearchEngine implements ISearchEngine {
         if(!file.exists()){
             throw new RuntimeErrorException(new Error());
         }
-        for(int i = 0 ; i<files.size(); i++){
-            Map.Entry temp = (Map.Entry)files.get(i);
-            if(temp.getKey().equals(filePath)){
+        for(int i = 0 ; i<paths.size(); i++){
+            if(paths.get(i).equals(filePath)){
                 files.remove(i);
+                paths.remove(i);
             }
         }
     }
@@ -206,31 +127,46 @@ public class SearchEngine implements ISearchEngine {
     @Override
     public List<ISearchResult> searchByWordWithRanking(String word) {
         List<ISearchResult> searched = new ArrayList<>();
-        String toBeFound = word.toLowerCase();
-        for(int i = 0; i<files.size(); i++){
-            Iterator iterator =  files.get(i).entrySet().iterator();
-            while(iterator.hasNext()){
-                Map.Entry temp = (Map.Entry)iterator.next();
-                BTree tree = (BTree) temp.getValue();
-                if(tree.search(toBeFound)!= null){
-                    searched.add(new SearchResult(toBeFound,(int)tree.search(toBeFound)));
+        if(word!=(null)){
+            if(word.equals("")){
+                return searched;
+            }
+            String toBeFound = word.toLowerCase();
+            for(int i = 0; i<files.size(); i++){
+                HashMap temp = files.get(i);
+                Iterator iterator = temp.entrySet().iterator();
+                while(iterator.hasNext()){
+                    Map.Entry entry = (Map.Entry) iterator.next();
+                    BTree tree = (BTree) entry.getValue();
+                    if(tree.search(toBeFound)!= null){
+                        searched.add(new SearchResult((String) entry.getKey(),(int)tree.search(toBeFound)));
+                    }
                 }
             }
+            return searched;
+        }else{
+            throw new RuntimeErrorException(new Error());
         }
-        return searched;
     }
 
     @Override
     public List<ISearchResult> searchByMultipleWordWithRanking(String sentence) {
         List<ISearchResult> searched = new ArrayList<>();
-        String[] words = sentence.replaceAll("\n"," ").toLowerCase().split(" ");
-        for(int i= 0; i<words.length;i++){
-            List<ISearchResult> temp = searchByWordWithRanking(words[i]);
-            for(int j = 0; j<temp.size(); j++){
-                searched.add(temp.get(j));
+        if(sentence!=(null)){
+            if(sentence.equals("")){
+                return searched;
             }
+            String[] words = sentence.replaceAll("\n"," ").toLowerCase().split(" ");
+            for(int i= 0; i<words.length;i++){
+                List<ISearchResult> temp = searchByWordWithRanking(words[i]);
+                for(int j = 0; j<temp.size(); j++){
+                    searched.add(temp.get(j));
+                }
+            }
+            return searched;
+        } else{
+            throw new RuntimeErrorException(new Error());
         }
-        return searched;
     }
 
     private boolean isNullOrEmpty(String str) {
