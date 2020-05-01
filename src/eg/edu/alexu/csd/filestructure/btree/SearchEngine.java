@@ -12,9 +12,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class SearchEngine implements ISearchEngine {
     /**private final List<String> IDs=new ArrayList<>();
@@ -24,10 +22,10 @@ public class SearchEngine implements ISearchEngine {
         minDegree=min;
     }*/
 
-    private List<BTree> files;
+    private HashMap<String, HashMap> files;
 
     public SearchEngine(){
-        this.files=new ArrayList<>();
+        this.files=new HashMap();
     }
 
 
@@ -75,9 +73,9 @@ public class SearchEngine implements ISearchEngine {
         } catch (SAXException e) {
             e.printStackTrace();
         }
-        BTree indexes = new BTree(64);
+        HashMap indexes = new HashMap();
         for(int i=0; i<webpages.size(); i++){
-            String[] words =  webpages.get(i).getValue().replaceAll("\n"," ").split(" ");
+            String[] words =  webpages.get(i).getValue().replaceAll("\n"," ").toLowerCase().split(" ");
             BTree WordTree = new BTree(128);
             for(int j = 0; j<words.length; j++){
                 if(words[j].equals("")){
@@ -91,9 +89,9 @@ public class SearchEngine implements ISearchEngine {
                     WordTree.insert(words[j],rank);
                 }
             }
-            indexes.insert((Comparable) webpages.get(i).getIndex(), WordTree);
+            indexes.put(webpages.get(i).getIndex(), WordTree);
         }
-        files.add(indexes);
+        files.put(filePath,indexes);
         /*DocumentBuilderFactory factory=DocumentBuilderFactory.newInstance();
         try {
             DocumentBuilder parser=factory.newDocumentBuilder();
@@ -183,8 +181,9 @@ public class SearchEngine implements ISearchEngine {
         if (!directory.exists()){
             throw new RuntimeErrorException(new Error());
         }
-
-
+        for(int i =0; i<directory.listFiles().length; i++){
+            indexWebPage(directory.listFiles()[i].getPath());
+        }
     }
 
     @Override
@@ -196,18 +195,44 @@ public class SearchEngine implements ISearchEngine {
         if(!file.exists()){
             throw new RuntimeErrorException(new Error());
         }
-
+        for(int i = 0 ; i<files.size(); i++){
+            Map.Entry temp = (Map.Entry)files.get(i);
+            if(temp.getKey().equals(filePath)){
+                files.remove(i);
+            }
+        }
     }
 
     @Override
     public List<ISearchResult> searchByWordWithRanking(String word) {
-        return null;
+        List<ISearchResult> searched = new ArrayList<>();
+        String toBeFound = word.toLowerCase();
+        for(int i = 0; i<files.size(); i++){
+            Iterator iterator =  files.get(i).entrySet().iterator();
+            while(iterator.hasNext()){
+                Map.Entry temp = (Map.Entry)iterator.next();
+                BTree tree = (BTree) temp.getValue();
+                if(tree.search(toBeFound)!= null){
+                    searched.add(new SearchResult(toBeFound,(int)tree.search(toBeFound)));
+                }
+            }
+        }
+        return searched;
     }
 
     @Override
     public List<ISearchResult> searchByMultipleWordWithRanking(String sentence) {
-        return null;
+        List<ISearchResult> searched = new ArrayList<>();
+        String[] words = sentence.replaceAll("\n"," ").toLowerCase().split(" ");
+        for(int i= 0; i<words.length;i++){
+            List<ISearchResult> temp = searchByWordWithRanking(words[i]);
+            for(int j = 0; j<temp.size(); j++){
+                searched.add(temp.get(j));
+            }
+        }
+        return searched;
     }
+
     private boolean isNullOrEmpty(String str) {
         if(str != null && !str.isEmpty() && !str.trim().isEmpty()){
             return false;
